@@ -260,6 +260,61 @@ inline void transform_frame(const uint8_t* src, uint8_t* dst, const Layout& L, c
     }
 }
 
+// Same rotation as transform_frame, split in two so a fixed rotation pays for the trigonometry once:
+// build_transform_map stores, per eye pixel, where it samples the source eye (NaN = outside the picture); every
+// eye of a packed frame shares one map because the eyes have the same projection. apply_transform_map then only
+// samples. Positions are stored as float (error < 0.001 px at 8K, below 8-bit rounding in practice).
+inline void build_transform_map(const Layout& L, const Mat3& R, float* uv, int row_begin = 0, int row_end = -1) {
+    Equirect p = L.eye_projection();
+    int r1 = row_end < 0 ? L.eye_height : std::min(row_end, L.eye_height);
+    for (int j = row_begin; j < r1; ++j)
+        for (int i = 0; i < L.eye_width; ++i) {
+            Vec3 d;
+            double su = NAN, sv = NAN;
+            bool ok = p.pixel_to_dir(i + 0.5, j + 0.5, d) && p.dir_to_pixel(R * d, su, sv);
+            float* o = uv + 2 * ((size_t) j * L.eye_width + i);
+            o[0] = ok ? (float) su : NAN;
+            o[1] = ok ? (float) sv : NAN;
+        }
+}
+
+inline void apply_transform_map(const uint8_t* src, uint8_t* dst, const Layout& L, const float* uv, int row_begin = 0,
+                                int row_end = -1, bool transparent = true) {
+    const bool wrap = L.eye_projection().full360();
+    const int W = L.packing == Packing::SBS ? 2 * L.eye_width : L.eye_width;
+    const uint8_t black[4] = {0, 0, 0, uint8_t(transparent ? 0 : 255)};
+    int r1 = row_end < 0 ? L.eye_height : std::min(row_end, L.eye_height);
+    for (int e = 0; e < L.eyes(); ++e) {
+        int x0, y0;
+        L.eye_origin(e, x0, y0);
+        for (int j = row_begin; j < r1; ++j)
+            for (int i = 0; i < L.eye_width; ++i) {
+                const float* m = uv + 2 * ((size_t) j * L.eye_width + i);
+                uint8_t* o = dst + 4 * ((y0 + j) * W + x0 + i);
+                if (std::isnan(m[0])) {
+                    std::memcpy(o, black, 4);
+                    continue;
+                }
+                // Fast path: all four neighbours inside the eye (almost every pixel). Same bilinear as
+                // sample_rgba8, in float and without its per-pixel clamping.
+                const float x = m[0] - 0.5f, y = m[1] - 0.5f;
+                const int xi = (int) std::floor(x), yi = (int) std::floor(y);
+                if (xi >= 0 && yi >= 0 && xi + 1 < L.eye_width && yi + 1 < L.eye_height) {
+                    const float fx = x - xi, fy = y - yi;
+                    const uint8_t* a = src + 4 * ((size_t) (y0 + yi) * W + x0 + xi);
+                    const uint8_t* c = a + 4 * (size_t) W;
+                    for (int ch = 0; ch < 4; ++ch) {
+                        const float top = a[ch] + fx * (a[ch + 4] - a[ch]);
+                        const float bot = c[ch] + fx * (c[ch + 4] - c[ch]);
+                        o[ch] = (uint8_t) (top + fy * (bot - top) + 0.5f);   // in [0, 255]: no clamp needed
+                    }
+                    continue;
+                }
+                sample_rgba8(src, W, x0, y0, L.eye_width, L.eye_height, m[0], m[1], wrap, o, black);
+            }
+    }
+}
+
 // ------------------------------------------------- per-eye rotation (eyealign.py, any per-eye op)
 // Rotate one eye (0 = L, 1 = R) of a packed frame by R; the other eye is copied unchanged by the caller.
 inline void transform_eye(const uint8_t* src, uint8_t* dst, const Layout& L, int eye, const Mat3& R, int row_begin = 0,

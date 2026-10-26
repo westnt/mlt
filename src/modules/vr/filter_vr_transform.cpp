@@ -10,13 +10,51 @@
 #include "vr_props.hpp"
 #include <framework/mlt_slices.h>
 #include <cstdlib>
+#include <memory>
+#include <mutex>
+#include <vector>
+
+// The rotation's per-pixel source positions, kept while the rotation, layout and frame size stay the same (a
+// fixed, un-animated rotation then costs only a bilinear sample per pixel instead of the trigonometry).
+struct transform_map
+{
+    double key[10];
+    std::vector<float> uv;
+};
+
+struct map_cache
+{
+    std::mutex lock;
+    std::shared_ptr<transform_map> map;
+};
+
+static void map_cache_close(void *p)
+{
+    delete (map_cache *) p;
+}
+
+struct build_job
+{
+    vrcore::Layout layout;
+    vrcore::Mat3 R;
+    float *uv;
+};
+
+static int build_proc(int id, int index, int jobs, void *cookie)
+{
+    (void) id;
+    build_job *j = (build_job *) cookie;
+    int start, n = mlt_slices_size_slice(jobs, index, j->layout.eye_height, &start);
+    vrcore::build_transform_map(j->layout, j->R, j->uv, start, start + n);
+    return 0;
+}
 
 struct job
 {
     const uint8_t *src;
     uint8_t *dst;
     vrcore::Layout layout;
-    vrcore::Mat3 R;
+    const float *uv;
     bool transparent;
 };
 
@@ -25,8 +63,31 @@ static int slice_proc(int id, int index, int jobs, void *cookie)
     (void) id;
     job *j = (job *) cookie;
     int start, n = mlt_slices_size_slice(jobs, index, j->layout.eye_height, &start);
-    vrcore::transform_frame(j->src, j->dst, j->layout, j->R, start, start + n, j->transparent);
+    vrcore::apply_transform_map(j->src, j->dst, j->layout, j->uv, start, start + n, j->transparent);
     return 0;
+}
+
+static std::shared_ptr<transform_map> get_map(mlt_properties p, const vrcore::Layout &L, double yaw, double pitch,
+                                              double roll)
+{
+    map_cache *cache = (map_cache *) mlt_properties_get_data(p, "_vr_transform_map", NULL);
+    if (!cache) {
+        cache = new map_cache;
+        mlt_properties_set_data(p, "_vr_transform_map", cache, 0, map_cache_close, NULL);
+    }
+    vrcore::Equirect e = L.eye_projection();
+    const double key[10] = {(double) L.eye_width, (double) L.eye_height, (double) (int) L.packing,
+                            e.lon0, e.lon1, e.lat0, e.lat1, yaw, pitch, roll};
+    std::lock_guard<std::mutex> g(cache->lock);
+    if (cache->map && !std::memcmp(cache->map->key, key, sizeof key))
+        return cache->map;
+    auto m = std::make_shared<transform_map>();
+    std::memcpy(m->key, key, sizeof key);
+    m->uv.resize(2 * (size_t) L.eye_width * L.eye_height);
+    build_job b{L, vrcore::ypr_to_matrix(yaw, pitch, roll), m->uv.data()};
+    mlt_slices_run_normal(0, build_proc, &b);
+    cache->map = m;  // an animated rotation replaces it every frame: no worse than computing it directly
+    return m;
 }
 
 static int filter_get_image(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height,
@@ -47,9 +108,10 @@ static int filter_get_image(mlt_frame frame, uint8_t **image, mlt_image_format *
     bool transparent = mlt_properties_get_int(p, "transparent") != 0;
     mlt_service_unlock(MLT_FILTER_SERVICE(filter));
     if (yaw == 0 && pitch == 0 && roll == 0) return 0;
+    std::shared_ptr<transform_map> map = get_map(p, L, yaw, pitch, roll);
     int size = *width * *height * 4;  // RGBA8 (mlt_image_format_size is deprecated)
     uint8_t *out = (uint8_t *) mlt_pool_alloc(size);
-    job j{*image, out, L, vrcore::ypr_to_matrix(yaw, pitch, roll), transparent};
+    job j{*image, out, L, map->uv.data(), transparent};
     mlt_slices_run_normal(0, slice_proc, &j);
     mlt_frame_set_image(frame, out, size, mlt_pool_release);
     *image = out;
