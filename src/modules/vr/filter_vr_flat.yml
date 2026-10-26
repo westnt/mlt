@@ -1,0 +1,104 @@
+schema_version: 7.0
+type: filter
+identifier: vr_flat
+title: "VR: Reframe to Flat"
+version: 1
+copyright: the vredit authors
+license: GPLv2
+language: en
+tags:
+  - Video
+description: >
+  Reframe a VR clip into flat video with a keyframed virtual camera; optional half side-by-side flat 3D.
+parameters:
+  - identifier: packing
+    title: Packing
+    type: string
+    values: [mono, sbs, tb]
+    default: sbs
+    readonly: no
+  - identifier: lon_min
+    title: Longitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lon_max
+    title: Longitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: lat_min
+    title: Latitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lat_max
+    title: Latitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: swap_eyes
+    title: Right eye first
+    type: boolean
+    default: 0
+    readonly: no
+  - identifier: yaw
+    title: Yaw
+    type: float
+    minimum: -360
+    maximum: 360
+    default: 0
+    readonly: no
+    mutable: yes
+    animation: yes
+  - identifier: pitch
+    title: Pitch
+    type: float
+    minimum: -90
+    maximum: 90
+    default: 0
+    readonly: no
+    mutable: yes
+    animation: yes
+  - identifier: roll
+    title: Roll
+    type: float
+    minimum: -180
+    maximum: 180
+    default: 0
+    readonly: no
+    mutable: yes
+    animation: yes
+  - identifier: hfov
+    title: Field of view
+    type: float
+    minimum: 10
+    maximum: 170
+    default: 90
+    readonly: no
+    mutable: yes
+    animation: yes
+  - identifier: eye
+    title: Eye
+    type: string
+    values: [L, R]
+    default: L
+    readonly: no
+  - identifier: stereo
+    title: Flat 3D (half side by side)
+    type: boolean
+    default: 0
+    readonly: no
+  - identifier: convergence
+    title: Screen distance
+    type: float
+    minimum: 0.3
+    maximum: 20
+    default: 2
+    readonly: no
+    mutable: yes
+    animation: yes

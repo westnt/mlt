@@ -96,6 +96,10 @@ if(MOD_SPATIALAUDIO)
   add_subdirectory(spatialaudio)
 endif()
 
+if(MOD_VR)
+  add_subdirectory(vr)
+endif()
+
 if(MOD_VIDSTAB)
   add_subdirectory(vid.stab)
 endif()

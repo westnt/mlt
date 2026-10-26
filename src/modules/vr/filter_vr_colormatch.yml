@@ -1,0 +1,68 @@
+schema_version: 7.0
+type: filter
+identifier: vr_colormatch
+title: "VR: Match Eye Colors"
+version: 1
+copyright: the vredit authors
+license: GPLv2
+language: en
+tags:
+  - Video
+description: >
+  Apply a per-eye colour correction (3x4 affine matrix) so both eyes match.
+parameters:
+  - identifier: packing
+    title: Packing
+    type: string
+    values: [mono, sbs, tb]
+    default: sbs
+    readonly: no
+  - identifier: lon_min
+    title: Longitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lon_max
+    title: Longitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: lat_min
+    title: Latitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lat_max
+    title: Latitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: swap_eyes
+    title: Right eye first
+    type: boolean
+    default: 0
+    readonly: no
+  - identifier: eye
+    title: Correct eye
+    type: string
+    values: [R, L]
+    default: R
+    readonly: no
+  - identifier: matrix
+    title: Matrix (3x4)
+    type: string
+    default: "1 0 0 0 0 1 0 0 0 0 1 0"
+    readonly: no
+  - identifier: strength
+    title: Strength
+    type: float
+    minimum: 0
+    maximum: 1
+    default: 1
+    readonly: no
+    mutable: yes
+    animation: yes

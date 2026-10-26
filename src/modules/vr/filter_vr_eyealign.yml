@@ -1,0 +1,80 @@
+schema_version: 7.0
+type: filter
+identifier: vr_eyealign
+title: "VR: Align Eyes"
+version: 1
+copyright: the vredit authors
+license: GPLv2
+language: en
+tags:
+  - Video
+description: >
+  Correct a stereo lens misalignment by rotating the eyes relative to each other (removes vertical disparity).
+parameters:
+  - identifier: packing
+    title: Packing
+    type: string
+    values: [mono, sbs, tb]
+    default: sbs
+    readonly: no
+  - identifier: lon_min
+    title: Longitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lon_max
+    title: Longitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: lat_min
+    title: Latitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lat_max
+    title: Latitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: swap_eyes
+    title: Right eye first
+    type: boolean
+    default: 0
+    readonly: no
+  - identifier: yaw
+    title: Right eye yaw
+    type: float
+    minimum: -5
+    maximum: 5
+    default: 0
+    readonly: no
+    mutable: yes
+    animation: yes
+  - identifier: pitch
+    title: Right eye pitch
+    type: float
+    minimum: -5
+    maximum: 5
+    default: 0
+    readonly: no
+    mutable: yes
+    animation: yes
+  - identifier: roll
+    title: Right eye roll
+    type: float
+    minimum: -5
+    maximum: 5
+    default: 0
+    readonly: no
+    mutable: yes
+    animation: yes
+  - identifier: split
+    title: Split between both eyes
+    type: boolean
+    default: 1
+    readonly: no

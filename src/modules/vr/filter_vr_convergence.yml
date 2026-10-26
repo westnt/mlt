@@ -1,0 +1,78 @@
+schema_version: 7.0
+type: filter
+identifier: vr_convergence
+title: "VR: Convergence"
+version: 1
+copyright: the vredit authors
+license: GPLv2
+language: en
+tags:
+  - Video
+description: >
+  Move the whole stereo scene nearer or farther (stereo convergence). Each eye is shifted the opposite way, so
+  every disparity changes by the same angle. + = nearer. For VR180 (parallel rigs) the shift runs along the
+  epipolar circles, which keeps vertical disparity at zero and leaves no blank edge; for stereo 360 (ODS) it is
+  an opposite yaw per eye. Put it before VR: Transform.
+parameters:
+  - identifier: packing
+    title: Packing
+    type: string
+    values: [mono, sbs, tb]
+    default: sbs
+    readonly: no
+    mutable: yes
+  - identifier: lon_min
+    title: Longitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lon_max
+    title: Longitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: lat_min
+    title: Latitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lat_max
+    title: Latitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: swap_eyes
+    title: Right eye first
+    type: boolean
+    default: 0
+    readonly: no
+  - identifier: shift
+    title: Convergence shift
+    description: Total disparity change in degrees; positive brings the scene nearer
+    type: float
+    default: 0
+    minimum: -20
+    maximum: 20
+    unit: degrees
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: method
+    title: Method
+    type: string
+    values: [auto, yaw, epipolar]
+    default: auto
+    mutable: yes
+    readonly: no
+  - identifier: rig
+    title: Stereo rig
+    description: auto = ODS when the eye covers 360 degrees of longitude, else a parallel (VR180) rig
+    type: string
+    values: [auto, parallel, ods]
+    default: auto
+    mutable: yes
+    readonly: no

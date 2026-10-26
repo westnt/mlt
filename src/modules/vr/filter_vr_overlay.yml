@@ -1,0 +1,183 @@
+schema_version: 7.0
+type: transition
+identifier: vr_overlay
+title: "VR: 3D Overlay"
+version: 1
+copyright: the vredit authors
+license: GPLv2
+language: en
+tags:
+  - Video
+description: >
+  Place the upper track's picture (title, image, video, keyed subject) in the 3D scene of a VR clip: at a direction
+  (yaw, pitch) and distance in metres, with a size in metres or degrees, facing the viewer or fixed, flat or curved.
+  Each eye sees it from its own position, so it appears at the right depth in stereo (VR180 and stereo 360).
+parameters:
+  - identifier: packing
+    title: Packing
+    type: string
+    values: [mono, sbs, tb]
+    default: sbs
+    readonly: no
+    mutable: yes
+  - identifier: lon_min
+    title: Longitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lon_max
+    title: Longitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: lat_min
+    title: Latitude min
+    type: float
+    default: -90
+    unit: degrees
+    readonly: no
+  - identifier: lat_max
+    title: Latitude max
+    type: float
+    default: 90
+    unit: degrees
+    readonly: no
+  - identifier: swap_eyes
+    title: Right eye first
+    type: boolean
+    default: 0
+    readonly: no
+  - identifier: yaw
+    title: Yaw
+    description: Direction of the layer's centre, + = right
+    type: float
+    default: 0
+    unit: degrees
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: pitch
+    title: Pitch
+    description: + = up
+    type: float
+    default: 0
+    unit: degrees
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: distance
+    title: Distance
+    type: float
+    default: 2
+    minimum: 0.1
+    unit: metres
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: width
+    title: Width
+    description: Metres, or degrees with size_mode angular; 0 = from the height and the picture's aspect
+    type: float
+    default: 1
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: height
+    title: Height
+    description: 0 = from the width and the picture's aspect
+    type: float
+    default: 0
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: size_mode
+    title: Size in
+    type: string
+    values: [metric, angular]
+    default: metric
+    mutable: yes
+    readonly: no
+  - identifier: facing
+    title: Facing
+    type: string
+    values: [viewer, fixed]
+    default: viewer
+    mutable: yes
+    readonly: no
+  - identifier: orient_yaw
+    title: Orientation yaw
+    description: facing fixed: the layer faces back along this direction
+    type: float
+    default: 0
+    unit: degrees
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: orient_pitch
+    title: Orientation pitch
+    type: float
+    default: 0
+    unit: degrees
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: roll
+    title: Roll
+    description: Turn about the layer's own normal, + = clockwise as seen
+    type: float
+    default: 0
+    unit: degrees
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: shape
+    title: Shape
+    type: string
+    values: [flat, cylinder, sphere]
+    default: flat
+    mutable: yes
+    readonly: no
+  - identifier: curve_radius
+    title: Curve radius
+    description: cylinder / sphere; 0 = the layer's distance (curved around the viewer)
+    type: float
+    default: 0
+    unit: metres
+    mutable: yes
+    readonly: no
+  - identifier: opacity
+    title: Opacity
+    type: float
+    default: 1
+    minimum: 0
+    maximum: 1
+    animation: yes
+    mutable: yes
+    readonly: no
+  - identifier: rig
+    title: Stereo rig
+    description: auto: mono = none, 360 = ODS, else parallel (VR180)
+    type: string
+    values: [auto, none, parallel, ods]
+    default: auto
+    mutable: yes
+    readonly: no
+  - identifier: baseline
+    title: Camera baseline
+    description: Eye distance of the footage's rig
+    type: float
+    default: 0.063
+    unit: metres
+    mutable: yes
+    readonly: no
+  - identifier: ss
+    title: Supersampling
+    description: ss x ss rays per pixel (smoother small text)
+    type: integer
+    default: 1
+    minimum: 1
+    maximum: 4
+    mutable: yes
+    readonly: no
