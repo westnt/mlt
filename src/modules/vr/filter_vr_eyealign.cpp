@@ -51,6 +51,7 @@ static int vr_eyealign_get_image(mlt_frame frame, uint8_t **image, mlt_image_for
     double yaw = vr_anim(p, "yaw", pos, len, 0), pitch = vr_anim(p, "pitch", pos, len, 0),
            roll = vr_anim(p, "roll", pos, len, 0);
     int split = mlt_properties_get(p, "split") ? mlt_properties_get_int(p, "split") : 1;
+    bool transparent = mlt_properties_get(p, "transparent") ? mlt_properties_get_int(p, "transparent") != 0 : true;
     mlt_service_unlock(MLT_FILTER_SERVICE(filter));
     if (L.eyes() < 2 || (yaw == 0 && pitch == 0 && roll == 0)) return 0;
     vrcore::Mat3 Q = vrcore::ypr_to_matrix(yaw, pitch, roll), I;
@@ -62,12 +63,13 @@ static int vr_eyealign_get_image(mlt_frame frame, uint8_t **image, mlt_image_for
     uint8_t *out = (uint8_t *) mlt_pool_alloc(size);
     const uint8_t *src = *image;
     vr_run_rows(L.eye_height, [&](int r0, int r1) {
-        vrcore::transform_eye(src, out, L, 0, RL, r0, r1);
-        vrcore::transform_eye(src, out, L, 1, RR, r0, r1);
+        vrcore::transform_eye(src, out, L, 0, RL, r0, r1, transparent);
+        vrcore::transform_eye(src, out, L, 1, RR, r0, r1, transparent);
     });
     mlt_frame_set_image(frame, out, size, mlt_pool_release);
     *image = out;
     return 0;
 }
 
-VR_FILTER_BOILERPLATE(vr_eyealign, vr_eyealign_get_image, mlt_properties_set_int(p, "split", 1))
+VR_FILTER_BOILERPLATE(vr_eyealign, vr_eyealign_get_image, mlt_properties_set_int(p, "split", 1);
+                      mlt_properties_set_int(p, "transparent", 1))

@@ -235,10 +235,11 @@ inline void sample_rgba8(const uint8_t* img, int stride_px, int x0, int y0, int 
 // --------------------------------------------------------------------- warp.py
 // Rotate every eye of a packed RGBA8 frame by R (view -> source). src and dst may not alias.
 inline void transform_frame(const uint8_t* src, uint8_t* dst, const Layout& L, const Mat3& R, int row_begin = 0,
-                            int row_end = -1) {
+                            int row_end = -1, bool transparent = true) {
     Equirect p = L.eye_projection();
     const int W = L.packing == Packing::SBS ? 2 * L.eye_width : L.eye_width;
-    const uint8_t black[4] = {0, 0, 0, 255};
+    // Outside the picture: transparent (default) so tracks below show through, or opaque black.
+    const uint8_t black[4] = {0, 0, 0, uint8_t(transparent ? 0 : 255)};
     for (int e = 0; e < L.eyes(); ++e) {
         int x0, y0;
         L.eye_origin(e, x0, y0);
@@ -262,10 +263,11 @@ inline void transform_frame(const uint8_t* src, uint8_t* dst, const Layout& L, c
 // ------------------------------------------------- per-eye rotation (eyealign.py, any per-eye op)
 // Rotate one eye (0 = L, 1 = R) of a packed frame by R; the other eye is copied unchanged by the caller.
 inline void transform_eye(const uint8_t* src, uint8_t* dst, const Layout& L, int eye, const Mat3& R, int row_begin = 0,
-                          int row_end = -1) {
+                          int row_end = -1, bool transparent = true) {
     Equirect p = L.eye_projection();
     const int W = L.packing == Packing::SBS ? 2 * L.eye_width : L.eye_width;
-    const uint8_t black[4] = {0, 0, 0, 255};
+    // Outside the picture: transparent (default) so tracks below show through, or opaque black.
+    const uint8_t black[4] = {0, 0, 0, uint8_t(transparent ? 0 : 255)};
     int x0, y0;
     L.eye_origin(eye, x0, y0);
     int r1 = row_end < 0 ? L.eye_height : std::min(row_end, L.eye_height);

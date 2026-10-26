@@ -17,6 +17,7 @@ struct job
     uint8_t *dst;
     vrcore::Layout layout;
     vrcore::Mat3 R;
+    bool transparent;
 };
 
 static int slice_proc(int id, int index, int jobs, void *cookie)
@@ -24,7 +25,7 @@ static int slice_proc(int id, int index, int jobs, void *cookie)
     (void) id;
     job *j = (job *) cookie;
     int start, n = mlt_slices_size_slice(jobs, index, j->layout.eye_height, &start);
-    vrcore::transform_frame(j->src, j->dst, j->layout, j->R, start, start + n);
+    vrcore::transform_frame(j->src, j->dst, j->layout, j->R, start, start + n, j->transparent);
     return 0;
 }
 
@@ -43,11 +44,12 @@ static int filter_get_image(mlt_frame frame, uint8_t **image, mlt_image_format *
     double pitch = mlt_properties_anim_get_double(p, "pitch", pos, len);
     double roll = mlt_properties_anim_get_double(p, "roll", pos, len);
     vrcore::Layout L = vr_layout_from(p, *width, *height);
+    bool transparent = mlt_properties_get_int(p, "transparent") != 0;
     mlt_service_unlock(MLT_FILTER_SERVICE(filter));
     if (yaw == 0 && pitch == 0 && roll == 0) return 0;
     int size = *width * *height * 4;  // RGBA8 (mlt_image_format_size is deprecated)
     uint8_t *out = (uint8_t *) mlt_pool_alloc(size);
-    job j{*image, out, L, vrcore::ypr_to_matrix(yaw, pitch, roll)};
+    job j{*image, out, L, vrcore::ypr_to_matrix(yaw, pitch, roll), transparent};
     mlt_slices_run_normal(0, slice_proc, &j);
     mlt_frame_set_image(frame, out, size, mlt_pool_release);
     *image = out;
@@ -71,6 +73,7 @@ extern "C" mlt_filter filter_vr_transform_init(mlt_profile profile, mlt_service_
         mlt_properties_set_double(p, "yaw", 0);
         mlt_properties_set_double(p, "pitch", 0);
         mlt_properties_set_double(p, "roll", 0);
+        mlt_properties_set_int(p, "transparent", 1);  // outside the picture: see-through
         filter->process = filter_process;
     }
     return filter;

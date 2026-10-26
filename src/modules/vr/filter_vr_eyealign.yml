@@ -78,3 +78,12 @@ parameters:
     type: boolean
     default: 1
     readonly: no
+  - identifier: transparent
+    title: Transparent outside the picture
+    description: >
+      Where the turned view leaves the picture (past the edge of a 180° clip), show the tracks below
+      instead of black.
+    type: boolean
+    default: 1
+    mutable: yes
+    readonly: no
