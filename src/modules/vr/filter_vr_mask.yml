@@ -138,3 +138,11 @@ parameters:
     type: color
     default: "#ff000000"
     readonly: no
+  - identifier: transparent
+    title: Transparent masked area
+    description: >
+      Fade the masked area to transparent so tracks below show through (default), instead of to the colour.
+    type: boolean
+    default: 1
+    mutable: yes
+    readonly: no

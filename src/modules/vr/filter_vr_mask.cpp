@@ -3,7 +3,8 @@
  * Copyright (C) 2026 the vredit authors. GPL-2.0-or-later.  Reference: vredit/view/masks.py
  * mode: fov (keep a circle of `fov` degrees around center_lon/center_lat), rect (keep the window
  * crop_lon_min..crop_lon_max x crop_lat_min..crop_lat_max), nadir / zenith (cover a cap of cap_radius degrees).
- * Outside the kept area (or inside the cap) the picture blends to `color` over `feather` degrees.
+ * Outside the kept area (or inside the cap) the picture fades out over `feather` degrees: to transparent
+ * (transparent=1, default: tracks below show through) or to `color` (transparent=0).
  */
 #include "vr_filter_common.hpp"
 #include <cstring>
@@ -27,6 +28,7 @@ static int vr_mask_get_image(mlt_frame frame, uint8_t **image, mlt_image_format 
     double la0 = vr_anim(p, "crop_lat_min", pos, len, -90), la1 = vr_anim(p, "crop_lat_max", pos, len, 90);
     double cap = vr_anim(p, "cap_radius", pos, len, 20);
     mlt_color c = mlt_properties_get(p, "color") ? mlt_properties_get_color(p, "color") : mlt_color{0, 0, 0, 255};
+    bool transparent = mlt_properties_get(p, "transparent") ? mlt_properties_get_int(p, "transparent") != 0 : true;
     mlt_service_unlock(MLT_FILTER_SERVICE(filter));
     const int W = *width;
     uint8_t *img = *image;
@@ -43,6 +45,10 @@ static int vr_mask_get_image(mlt_frame frame, uint8_t **image, mlt_image_format 
                     else if (mode == 1) keep = vrcore::rect_mask_at(pr, u, v, lo0, lo1, la0, la1, feather);
                     else keep = 1.0 - vrcore::cap_at(pr, u, v, cap, feather, mode == 3);
                     uint8_t *px = img + 4 * ((y0 + j) * W + x0 + i);
+                    if (transparent) {  // fade the clip's own opacity; colours stay as they are
+                        px[3] = (uint8_t) std::clamp((int) std::lround(px[3] * keep), 0, 255);
+                        continue;
+                    }
                     for (int ch = 0; ch < 3; ++ch)
                         px[ch] = (uint8_t) std::clamp((int) std::lround(px[ch] * keep + col[ch] * (1 - keep)), 0, 255);
                 }
@@ -51,4 +57,5 @@ static int vr_mask_get_image(mlt_frame frame, uint8_t **image, mlt_image_format 
     return 0;
 }
 
-VR_FILTER_BOILERPLATE(vr_mask, vr_mask_get_image, mlt_properties_set(p, "mode", "fov"))
+VR_FILTER_BOILERPLATE(vr_mask, vr_mask_get_image, mlt_properties_set(p, "mode", "fov");
+                      mlt_properties_set_int(p, "transparent", 1))
